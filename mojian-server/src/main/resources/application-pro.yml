@@ -1,0 +1,104 @@
+server:
+  port: 8800
+spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+  datasource:
+    url: jdbc:mysql://8.153.195.193:3306/blog?characterEncoding=UTF-8&useUnicode=true&useSSL=false&serverTimezone=Asia/Shanghai&tinyInt1isBit=false&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: bfs1201
+  redis:
+    host: 8.153.195.193
+    port: 6379
+    password: bfs1201
+    database: 8
+    timeout: 5000             # 单位是毫秒，代表命令等待响应的超时时间
+    lettuce:
+      pool:
+        max-active: 50        # ✅ 增加并发连接数上限，10可能偏低
+        max-idle: 20          # ✅ 允许更多空闲连接，防止频繁创建销毁
+        min-idle: 5
+        max-wait: 5000        # ✅ 等待获取连接的最大时长（单位毫秒）
+
+
+#==============================knife4j配置==============================
+knife4j:
+  enable: true
+  basic:
+    enable: true
+    username: admin
+    password: 123456
+  openapi:
+    title: bfs博客接口文档
+    description: 一个专注于技术分享的博客平台
+    # aaa"
+    email: 1748160564@qq.com
+    concat: bfs
+    url: http://8.153.195.193
+    version: v1.0
+    group:
+      test1:
+        group-name: 分组名称
+        api-rule: package
+        api-rule-resources:
+          - com.mojian
+
+#==============================公众号配置==============================
+wechat:
+  app-id:
+  # 公众号AppSecret
+  secret:
+  # 公众号Token
+  token:
+  # 公众号AES Key
+  aesKey:
+
+  appletAppId:
+  appletSecret:
+
+#==============================豆包推理AI配置=======================================
+ai:
+  # API Key
+  apiKey:
+  baseUrl: https://ark.cn-beijing.volces.com/api/v3
+  # 推理接入点ID
+  model:
+
+#==============================邮箱配置=======================================
+mail:
+  smtp:
+    host: smtp.163.com
+    port: 25
+    email: 18697691201@163.com
+    password: NEUym39C6RKaNEbz
+
+#============================第三方登录配置信息===================================
+qq:
+  app-id:
+  app-secret:
+  redirect-url: https://www.shiyit.com/mojian/api/auth/callback/qq
+weibo:
+  app-id:
+  app-secret:
+  redirect-url: https://www.shiyit.com/mojian/api/auth/weibo
+
+gitee:
+  app-id:
+  app-secret:
+  redirect-url: https://www.shiyit.com/mojian/api/auth/callback/gitee
+
+github:
+  app-id:
+  app-secret:
+  redirect-url: https://www.shiyit.com/shiyi/mojian/api/auth/callback/github
+# http://192.168.19.135:9000/default/PixPin_2024-11-09_10-41-03.jpg
+minio:
+  endpoint: http://8.153.195.193:9000
+  access-key: rEnNgLJW4TTpWdAWLelD
+  secret-key: 5mR3ztlujBVgH5NtU1kJEJaXzOcyizzZvqyJPmlw
+  bucket-name: bfs
+# 图片URL前缀，已经做过反向代理
+URLPrefix: https://sheng666.top/imgs/

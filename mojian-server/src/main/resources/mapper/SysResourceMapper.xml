@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mojian.mapper.SysResourceMapper">
+    <!-- 可以在这里添加自定义的复杂SQL查询 -->
+
+    <select id="getResourceList" resultType="com.mojian.vo.resource.SysResourceVo">
+        select
+            t.id,
+            t.user_id,
+            u.nickname,
+            u.avatar,
+            t.name,
+            t.category,
+            t.downloads,
+            t.create_time
+        from sys_resource t
+        left join sys_user u on t.user_id = u.id
+        where t.status = 2
+            <if test="sysResource.category != null and sysResource.category != ''">
+                and t.category = #{sysResource.category}
+            </if>
+            <if test="sysResource.name != null and sysResource.name != ''">
+                and t.name like concat('%',#{sysResource.name},'%')
+            </if>
+        order by t.downloads desc ,t.create_time desc
+    </select>
+</mapper>
