@@ -19,13 +19,18 @@ import eu.bitwalker.useragentutils.UserAgent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class HomeServiceImpl implements HomeService {
+    @Resource
+    private IpUtil ipUtil;
 
     private final SysWebConfigMapper sysWebConfigMapper;
 
@@ -72,9 +77,11 @@ public class HomeServiceImpl implements HomeService {
     @Override
     public void report() {
         // 获取ip
-        String ipAddress = IpUtil.getIp();
+        String ipAddress = ipUtil.getIp();
         // 通过浏览器解析工具类UserAgent获取访问设备信息
-        UserAgent userAgent = IpUtil.getUserAgent(Objects.requireNonNull(IpUtil.getRequest()));
+        // 获取request
+        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        UserAgent userAgent = ipUtil.getUserAgent(Objects.requireNonNull(requestAttributes.getRequest()));
         Browser browser = userAgent.getBrowser();
         OperatingSystem operatingSystem = userAgent.getOperatingSystem();
         // 生成唯一用户标识

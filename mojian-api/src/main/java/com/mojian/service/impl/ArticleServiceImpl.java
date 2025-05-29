@@ -24,6 +24,7 @@ import com.mojian.utils.PageUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +34,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ArticleServiceImpl implements ArticleService {
+    @Resource
+    private IpUtil ipUtil;
 
     private final SysArticleMapper sysArticleMapper;
 
@@ -57,7 +60,7 @@ public class ArticleServiceImpl implements ArticleService {
         }
 
         // 添加阅读量
-        String ip = IpUtil.getIp();  // 获取当前访问者的IP地址
+        String ip = ipUtil.getIp();  // 获取当前访问者的IP地址
         ThreadUtil.execAsync(() -> {  // 使用异步线程执行，避免影响主流程
             // 从Redis获取所有文章的访问记录
             Map<Object, Object> map = redisUtil.hGetAll(RedisConstants.ARTICLE_QUANTITY);

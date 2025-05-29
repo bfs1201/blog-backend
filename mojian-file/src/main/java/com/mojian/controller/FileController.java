@@ -23,6 +23,7 @@ import org.dromara.x.file.storage.core.FileStorageService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -31,7 +32,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/file")
+@RequestMapping("/api/file")
 @Api(tags = "文件管理")
 @RequiredArgsConstructor
 public class FileController {
@@ -39,6 +40,9 @@ public class FileController {
     private final FileDetailService fileDetailService;
 
     private final FileStorageService fileStorageService;
+
+    @Resource
+    private MinIOUtils minIOUtils;
 
 
     @SaCheckLogin
@@ -104,12 +108,12 @@ public class FileController {
     @PostMapping("/upload")
     @ApiOperation(value = "上传文件")
     public Result<String> upload(MultipartFile file, String source) {
-        String url;
+        String url = null;
         try {
-            url = MinIOUtils.uploadFile(file);
-        } catch (IOException | InvalidKeyException | InsufficientDataException | ErrorResponseException |
-                 NoSuchAlgorithmException | InvalidResponseException | XmlParserException | InternalException e) {
-            throw new ServiceException("上传文件失败");
+            url = minIOUtils.uploadFile(file);
+        } catch (Exception e) {
+            log.error("上传文件失败");
+            return Result.error("上传文件失败");
         }
         log.info("图片url：{}", url);
         return Result.success(url);
@@ -117,11 +121,14 @@ public class FileController {
 
     @GetMapping("/delete")
     @ApiOperation(value = "删除文件")
-    @SaCheckPermission("sys:file:delete")
     public Result<Boolean> delete(String url) {
-        boolean flag = fileStorageService.delete(url);
-        if (flag) {
-            fileDetailService.delete(url);
+        int index = url.lastIndexOf("/");
+        String fileName = url.substring(index);
+        try {
+            minIOUtils.removeFile(fileName);
+        } catch (Exception e) {
+            log.error("文件删除异常");
+            return Result.error("文件删除异常");
         }
         return Result.success();
     }

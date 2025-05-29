@@ -41,6 +41,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -52,7 +53,8 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
-
+    @Resource
+    private IpUtil ipUtil;
 
     private final SysUserMapper userMapper;
 
@@ -284,8 +286,8 @@ public class AuthServiceImpl implements AuthService {
         com.alibaba.fastjson.JSONObject jsonObject = JSON.parseObject(result);
         Object uuid = jsonObject.get("uuid");
         // 获取用户ip信息
-        String ipAddress = IpUtil.getIp();
-        String ipSource = IpUtil.getIp2region(ipAddress);
+        String ipAddress = ipUtil.getIp();
+        String ipSource = ipUtil.getCityInfo(ipAddress);
         // 判断是否已注册
         SysUser user = userMapper.selectOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, uuid));
         if (ObjectUtils.isEmpty(user)) {
@@ -325,14 +327,14 @@ public class AuthServiceImpl implements AuthService {
         SysUser user = userMapper.selectByUsername(openid.toString());
 
         if (user == null) {
-            String ip = IpUtil.getIp();
+            String ip = ipUtil.getIp();
             String avatar = avatarList[(int) (Math.random() * avatarList.length)];
             user = SysUser.builder()
                     .username(openid.toString())
                     .password(UUID.randomUUID().toString())
                     .loginType(LoginTypeEnum.APPLET.getType())
                     .lastLoginTime(LocalDateTime.now())
-                    .ipLocation(IpUtil.getIp2region(ip))
+                    .ipLocation(ipUtil.getCityInfo(ip))
                     .ip(ip)
                     .status(Constants.YES)
                     .nickname("applet-" + getRandomString(6))
@@ -372,8 +374,8 @@ public class AuthServiceImpl implements AuthService {
     private LoginUserInfo wechatLogin(String openId) {
         SysUser user = userMapper.selectByUsername(openId);
         if (ObjectUtils.isEmpty(user)) {
-            String ip = IpUtil.getIp();
-            String ipSource = IpUtil.getIp2region(ip);
+            String ip = ipUtil.getIp();
+            String ipSource = ipUtil.getCityInfo(ip);
 
             // 保存账号信息
             user = SysUser.builder()

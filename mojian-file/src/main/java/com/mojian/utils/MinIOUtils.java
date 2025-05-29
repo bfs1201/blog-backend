@@ -9,6 +9,7 @@ import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
@@ -25,22 +26,23 @@ import java.util.*;
  * MinIO工具类
  */
 @Slf4j
+@Component
 public class MinIOUtils {
 
     private static MinioClient minioClient;
 
     @Value("${minio.endpoint}")
-    private static String endpoint;
+    private String endpoint;
     @Value("${minio.access-key}")
-    private static String accessKey;
+    private String accessKey;
     @Value("${minio.secret-key}")
-    private static String secretKey;
+    private String secretKey;
     @Value("${minio.bucket-name}")
-    private static String bucketName;
+    private String bucketName;
     @Value("${URLPrefix}")
-    private static String URLPrefix;
-    private static Integer imgSize;
-    private static Integer fileSize;
+    private String URLPrefix;
+    private Integer imgSize;
+    private Integer fileSize;
 
     private static final String SEPARATOR = "/";
 
@@ -48,29 +50,30 @@ public class MinIOUtils {
     }
 
     public MinIOUtils(String endpoint, String bucketName, String accessKey, String secretKey, Integer imgSize, Integer fileSize) {
-        MinIOUtils.endpoint = endpoint;
-        MinIOUtils.bucketName = bucketName;
-        MinIOUtils.accessKey = accessKey;
-        MinIOUtils.secretKey = secretKey;
-        MinIOUtils.imgSize = imgSize;
-        MinIOUtils.fileSize = fileSize;
+//        MinIOUtils.endpoint = endpoint;
+//        MinIOUtils.bucketName = bucketName;
+//        MinIOUtils.accessKey = accessKey;
+//        MinIOUtils.secretKey = secretKey;
+//        MinIOUtils.imgSize = imgSize;
+//        MinIOUtils.fileSize = fileSize;
         createMinioClient();
     }
 
-    public static void init() throws IOException {
-        Properties properties = new Properties();
-        InputStream inputStream = MinIOUtils.class.getClassLoader().getResourceAsStream("application.properties");
-        properties.load(inputStream);
-        endpoint = properties.getProperty("minio.endpoint");
-        String accessKey = properties.getProperty("minio.access-key");
-        String secretKey = properties.getProperty("minio.secret-key");
-        bucketName = properties.getProperty("minio.bucket-name");
-        URLPrefix = properties.getProperty("URLPrefix");
-        minioClient = MinioClient.builder()
-                .endpoint(endpoint)
-                .credentials(accessKey, secretKey)
-                .build();
-    }
+//    private void init() throws IOException {
+////        Properties properties = new Properties();
+////        InputStream inputStream = MinIOUtils.class.getClassLoader().getResourceAsStream("application.properties");
+////        properties.load(inputStream);
+////        endpoint = properties.getProperty("minio.endpoint");
+////        String accessKey = properties.getProperty("minio.access-key");
+////        String secretKey = properties.getProperty("minio.secret-key");
+////        bucketName = properties.getProperty("minio.bucket-name");
+////        URLPrefix = properties.getProperty("URLPrefix");
+//        log.info(endpoint);
+//        minioClient = MinioClient.builder()
+//                .endpoint(endpoint)
+//                .credentials(accessKey, secretKey)
+//                .build();
+//    }
 
     /**
      * 创建基于Java端的MinioClient
@@ -97,7 +100,7 @@ public class MinIOUtils {
      *
      * @return
      */
-    public static String getBasisUrl() {
+    public String getBasisUrl() {
         return endpoint + SEPARATOR + bucketName + SEPARATOR;
     }
 
@@ -294,8 +297,8 @@ public class MinIOUtils {
                         .build());
     }
 
-    public static String uploadFile(MultipartFile file) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        init();
+    public String uploadFile(MultipartFile file) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        createMinioClient();
         InputStream inputStream = file.getInputStream();
         try {
             minioClient.putObject(
@@ -424,7 +427,7 @@ public class MinIOUtils {
      * @param objectName
      * @throws Exception
      */
-    public static void removeFile(String objectName) throws Exception {
+    public void removeFile(String objectName) throws Exception {
         minioClient.removeObject(
                 RemoveObjectArgs.builder()
                         .bucket(bucketName)

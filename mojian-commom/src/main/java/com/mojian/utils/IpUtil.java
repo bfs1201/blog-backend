@@ -1,111 +1,51 @@
 package com.mojian.utils;
 
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.json.JSONUtil;
 import com.mojian.common.Constants;
 import eu.bitwalker.useragentutils.UserAgent;
-import org.apache.commons.lang3.StringUtils;
-import org.lionsoul.ip2region.xdb.Searcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
-import java.net.InetAddress;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.UnknownHostException;
+import java.net.*;
+import java.util.Enumeration;
 import java.util.Map;
 
+@Slf4j
+@Component
 public class IpUtil {
+    @Value("${location.api.format-url}")
+    private String FORMAT_URL;
 
-    private static final Logger logger = LoggerFactory.getLogger(IpUtil.class);
-    private final static String format_url = "https://apis.map.qq.com/ws/location/v1/ip?ip={}&key=XJIBZ-ZNUWU-ZHGVM-2Z3JG-VQKF2-HXFTB";
+    @Value("${location.api.key}")
+    private String API_KEY;
 
-    private final static String localIp = "127.0.0.1";
-
-    private final static String resource_name = "ip2region.xdb";
-
-
-    private static Searcher searcher = null;
-
-    static {
-        // 1、从 dbPath 加载整个 xdb 到内存。
-        byte[] cBuff = new byte[0];
-        InputStream inputStream = IpUtil.class.getClassLoader().getResourceAsStream(resource_name);
-        try {
-            File file = new File("ip2region.xdb");
-            FileUtil.writeFromStream(inputStream, file);
-            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
-            cBuff = Searcher.loadContent(randomAccessFile);
-        } catch (Exception e) {
-            System.out.printf("failed to load content from `%s`: %s\n", resource_name, e);
-        }
-
-        // 2、使用上述的 cBuff 创建一个完全基于内存的查询对象。
-        try {
-            searcher = Searcher.newWithBuffer(cBuff);
-        } catch (Exception e) {
-            System.out.printf("failed to create content cached searcher: %s\n", e);
-        }
-    }
-
+    private final static String DEFAULT_LOCAL_IP = "127.0.0.1";
 
     /**
-     * 获取request
+     * 获取当前公网 IP
+     *
      * @return
      */
-    public static HttpServletRequest getRequest(){
-
+    public String getIp() {
         try {
-            ServletRequestAttributes requestAttributes = (ServletRequestAttributes)RequestContextHolder.getRequestAttributes();
-            return requestAttributes.getRequest();
+            URL url = new URL("https://ipinfo.io/ip");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String ip = in.readLine();
+            in.close();
+            return ip;
         } catch (Exception e) {
-            return null;
+            log.error(e.getMessage(), e);
+            return "未知"; // 如果发生异常，返回 "未知"
         }
-    }
-
-    /**
-     * 获取ip地址
-     * @return
-     */
-    public static String getIp(){
-        HttpServletRequest request = getRequest();
-        String ipAddress;
-        try {
-            ipAddress = request.getHeader("x-forwarded-for");
-            if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-                ipAddress = request.getHeader("Proxy-Client-IP");
-            }
-            if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-                ipAddress = request.getHeader("WL-Proxy-Client-IP");
-            }
-            if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-                ipAddress = request.getRemoteAddr();
-                if (localIp.equals(ipAddress)) {
-                    // 根据网卡取本机配置的IP
-                    InetAddress inet = null;
-                    try {
-                        inet = InetAddress.getLocalHost();
-                        ipAddress = inet.getHostAddress();
-                    } catch (UnknownHostException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            // 对于通过多个代理的情况，第一个IP为客户端真实IP,多个IP按照','分割
-            if (ipAddress != null && ipAddress.length() > 15) {
-                // = 15
-                if (ipAddress.indexOf(",") > 0) {
-                    ipAddress = ipAddress.substring(0, ipAddress.indexOf(","));
-                }
-            }
-        } catch (Exception e) {
-            ipAddress = "";
-        }
-        return "0:0:0:0:0:0:0:1".equals(ipAddress) ? localIp : ipAddress;
     }
 
     /**
@@ -114,45 +54,25 @@ public class IpUtil {
      * @param ip ip地址
      * @return 解析后的ip地址
      */
-    public static String getCityInfo(String ip)  {
+    public String getCityInfo(String ip) {
         //解析ip地址，获取省市区
         String s = analyzeIp(ip);
         Map map = JSONUtil.toBean(s, Map.class);
         Integer status = (Integer) map.get("status");
         String address = Constants.UNKNOWN;
-        if(status == 0){
+        if (status == 0) {
             Map result = (Map) map.get("result");
             Map addressInfo = (Map) result.get("ad_info");
             String nation = (String) addressInfo.get("nation");
             String province = (String) addressInfo.get("province");
             String city = (String) addressInfo.get("city");
-            address = nation + "-" + province + "-" + city;
+            if (province.isEmpty()) {
+                address = "|" + nation;
+            } else {
+                address = nation + "|" + province + "|" + city;
+            }
         }
         return address;
-    }
-
-    /**
-     * 根据ip2region解析ip地址
-     * @param ip ip地址
-     * @return 解析后的ip地址信息
-     */
-    public static String getIp2region(String ip)  {
-
-        if(searcher == null){
-            logger.error("Error: DbSearcher is null");
-            return null;
-        }
-        String ipInfo = Constants.UNKNOWN;
-        try {
-            ipInfo = searcher.search(ip);
-            if (!StringUtils.isEmpty(ipInfo)) {
-                ipInfo = ipInfo.replace("|0", "");
-                ipInfo = ipInfo.replace("0|", "");
-            }
-            return ipInfo;
-        } catch (Exception e) {
-            return ipInfo;
-        }
     }
 
     /**
@@ -161,7 +81,7 @@ public class IpUtil {
      * @param request 请求
      * @return {@link UserAgent} 访问设备
      */
-    public static UserAgent getUserAgent(HttpServletRequest request){
+    public UserAgent getUserAgent(HttpServletRequest request) {
         return UserAgent.parseUserAgentString(request.getHeader("User-Agent"));
     }
 
@@ -170,12 +90,29 @@ public class IpUtil {
      *
      * @return 本地IP地址
      */
-    public static String getHostIp(){
-        try{
-            return InetAddress.getLocalHost().getHostAddress();
-        }catch (UnknownHostException e){
+    public String getHostIp() {
+        try {
+            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+            while (networkInterfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = networkInterfaces.nextElement();
+                // 跳过回环接口和未激活的接口
+                if (networkInterface.isLoopback() || !networkInterface.isUp()) {
+                    continue;
+                }
+                Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
+                while (inetAddresses.hasMoreElements()) {
+                    InetAddress inetAddress = inetAddresses.nextElement();
+                    // 过滤掉 IPv6 地址
+                    if (!inetAddress.isLoopbackAddress() && inetAddress.getHostAddress().indexOf(':') == -1) {
+                        return inetAddress.getHostAddress();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return localIp;
+        return DEFAULT_LOCAL_IP; // 如果无法获取地址，返回默认值
+
     }
 
     /**
@@ -183,8 +120,8 @@ public class IpUtil {
      *
      * @return 本地主机名
      */
-    public static String getHostName(){
-        try{
+    public static String getHostName() {
+        try {
             return InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
         }
@@ -192,25 +129,17 @@ public class IpUtil {
     }
 
     /**
+     * 调用腾讯地图API
      * 根据在腾讯位置服务上申请的key进行请求解析ip
+     *
      * @param ip ip地址
      * @return
      */
-    public static String analyzeIp(String ip) {
+    public String analyzeIp(String ip) {
         StringBuilder result = new StringBuilder();
         BufferedReader in = null;
         try {
-            String url = format_url.replace("{}", ip);
-            URL realUrl = new URL(url);
-            // 打开和URL之间的链接
-            URLConnection connection = realUrl.openConnection();
-            // 设置通用的请求属性
-            connection.setRequestProperty("accept", "*/*");
-            connection.setRequestProperty("connection", "Keep-Alive");
-            connection.setRequestProperty("user-agent",
-                    "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
-            // 创建实际的链接
-            connection.connect();
+            URLConnection connection = getUrlConnection(ip);
             // 定义 BufferedReader输入流来读取URL的响应
             in = new BufferedReader(new InputStreamReader(
                     connection.getInputStream()));
@@ -219,7 +148,7 @@ public class IpUtil {
                 result.append(line);
             }
         } catch (Exception e) {
-            logger.error("发送GET请求出现异常！异常信息为:{}",e.getMessage());
+            log.error("发送GET请求出现异常！异常信息为:{}", e.getMessage());
         }
         // 使用finally块来关闭输入流
         finally {
@@ -228,9 +157,25 @@ public class IpUtil {
                     in.close();
                 }
             } catch (Exception e2) {
-                e2.printStackTrace();
+                log.error(String.valueOf(e2));
             }
         }
         return result.toString();
+    }
+
+    @NotNull
+    private URLConnection getUrlConnection(String ip) throws IOException {
+        String url = FORMAT_URL.replace("{}", ip) + API_KEY;
+        URL realUrl = new URL(url);
+        // 打开和URL之间的链接
+        URLConnection connection = realUrl.openConnection();
+        // 设置通用的请求属性
+        connection.setRequestProperty("accept", "*/*");
+        connection.setRequestProperty("connection", "Keep-Alive");
+        connection.setRequestProperty("user-agent",
+                "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
+        // 创建实际的链接
+        connection.connect();
+        return connection;
     }
 }

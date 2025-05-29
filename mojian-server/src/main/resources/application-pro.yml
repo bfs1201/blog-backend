@@ -23,7 +23,6 @@ spring:
         min-idle: 5
         max-wait: 5000        # ✅ 等待获取连接的最大时长（单位毫秒）
 
-
 #==============================knife4j配置==============================
 knife4j:
   enable: true
@@ -59,14 +58,6 @@ wechat:
   appletAppId:
   appletSecret:
 
-#==============================豆包推理AI配置=======================================
-ai:
-  # API Key
-  apiKey:
-  baseUrl: https://ark.cn-beijing.volces.com/api/v3
-  # 推理接入点ID
-  model:
-
 #==============================邮箱配置=======================================
 mail:
   smtp:
@@ -79,26 +70,16 @@ mail:
 qq:
   app-id:
   app-secret:
-  redirect-url: https://www.shiyit.com/mojian/api/auth/callback/qq
+  redirect-url:
 weibo:
   app-id:
   app-secret:
-  redirect-url: https://www.shiyit.com/mojian/api/auth/weibo
-
+  redirect-url:
 gitee:
   app-id:
   app-secret:
-  redirect-url: https://www.shiyit.com/mojian/api/auth/callback/gitee
-
+  redirect-url:
 github:
   app-id:
   app-secret:
-  redirect-url: https://www.shiyit.com/shiyi/mojian/api/auth/callback/github
-# http://192.168.19.135:9000/default/PixPin_2024-11-09_10-41-03.jpg
-minio:
-  endpoint: http://8.153.195.193:9000
-  access-key: rEnNgLJW4TTpWdAWLelD
-  secret-key: 5mR3ztlujBVgH5NtU1kJEJaXzOcyizzZvqyJPmlw
-  bucket-name: bfs
-# 图片URL前缀，已经做过反向代理
-URLPrefix: https://sheng666.top/imgs/
+  redirect-url:

@@ -1,8 +1,8 @@
 spring:
   profiles:
-    active: pro
+    active: dev
 
-############## Sa-Token 配置 (文档: https://sa-token.cc) ##############
+############## Sa-Token (文档: https://sa-token.cc) ##############
 sa-token:
   # token 名称（同时也是 cookie 名称）
   token-name: Authorization
@@ -19,7 +19,7 @@ sa-token:
   # 是否输出操作日志
   is-log: true
 
-#==============================mybatis-plus配置=========================
+#============================== mybatis-plus =========================
 mybatis-plus:
   mapper-locations: classpath:/mapper/*Mapper.xml
   #实体扫描，多个package用逗号或者分号分隔
@@ -42,7 +42,7 @@ mybatis-plus:
     cache-enabled: false
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
-#==============================knife4j配置=======================================
+#============================== knife4j =======================================
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -54,4 +54,20 @@ springdoc:
     - group: 'default'
       paths-to-match: '/**'
       packages-to-scan: com.mojian.controller
+
+#============================== minIO =======================================
+# http://8.153.195.193:9000/bfs/B.png
+minio:
+  endpoint: http://8.153.195.193:9000
+  access-key: rEnNgLJW4TTpWdAWLelD
+  secret-key: 5mR3ztlujBVgH5NtU1kJEJaXzOcyizzZvqyJPmlw
+  bucket-name: bfs
+# 图片URL前缀，已经做过反向代理
+URLPrefix: https://sheng666.top/imgs/
+
+#==============================腾讯地图 IP定位 （https://lbs.qq.com/dev/console/application/mine） =======================================
+location:
+  api:
+    format-url: https://apis.map.qq.com/ws/location/v1/ip?ip={}&key=
+    key: OL2BZ-VFWRZ-SZDXO-7M5Z5-B2FX6-44BFI
 

@@ -16,7 +16,6 @@ spring:
     timeout: 3000
     database: 8
 
-
 #==============================knife4j配置==============================
 knife4j:
   enable: true
@@ -48,7 +47,6 @@ wechat:
   token:
   # 公众号AES Key
   aesKey:
-
   appletAppId:
   appletSecret:
 
@@ -56,7 +54,7 @@ wechat:
 ai:
   # API Key
   apiKey:
-  baseUrl: https://ark.cn-beijing.volces.com/api/v3
+  baseUrl:
   # 推理接入点ID
   model:
 
@@ -72,18 +70,16 @@ mail:
 qq:
   app-id:
   app-secret:
-  redirect-url: https://www.shiyit.com/mojian/api/auth/callback/qq
+  redirect-url:
 weibo:
   app-id:
   app-secret:
-  redirect-url: https://www.shiyit.com/mojian/api/auth/weibo
-
+  redirect-url:
 gitee:
   app-id:
   app-secret:
-  redirect-url: https://www.shiyit.com/mojian/api/auth/callback/gitee
-
+  redirect-url:
 github:
   app-id:
   app-secret:
-  redirect-url: https://www.shiyit.com/shiyi/mojian/api/auth/callback/github
+  redirect-url:

@@ -21,11 +21,14 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
 public class ChatServiceImpl implements ChatService {
+    @Resource
+    private IpUtil ipUtil;
 
     private final WebSocketServer webSocketServer;
 
@@ -52,18 +55,18 @@ public class ChatServiceImpl implements ChatService {
 
         ChatMsg chatMsg = BeanCopyUtil.copyObj(chatSendMsgVo, ChatMsg.class);
         chatMsg.setSenderId(StpUtil.getLoginIdAsLong());
-        chatMsg.setIp(IpUtil.getIp());
-        chatMsg.setLocation(IpUtil.getIp2region(chatMsg.getIp()));
+        chatMsg.setIp(ipUtil.getIp());
+        chatMsg.setLocation(ipUtil.getCityInfo(chatMsg.getIp()));
 
 
         chatMsgMapper.insert(chatMsg);
 
         chatSendMsgVo.setId(chatMsg.getId());
-        chatSendMsgVo.setLocation(IpUtil.getIp2region(chatMsg.getIp()));
+        chatSendMsgVo.setLocation(ipUtil.getCityInfo(chatMsg.getIp()));
         webSocketServer.sendAllMessage(JSON.toJSONString(chatSendMsgVo));
 
         //判断是否@拾壹小助手
-        String SHINY_XIA_ASSISTANT = "@拾壹小助手";
+        String SHINY_XIA_ASSISTANT = "@小助手";
         if (chatSendMsgVo.getContent().contains(SHINY_XIA_ASSISTANT)) {
             ThreadUtil.execAsync(() -> {
                 String replaceContent = chatSendMsgVo.getContent().replace(SHINY_XIA_ASSISTANT, "");

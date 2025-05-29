@@ -15,6 +15,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +26,8 @@ import java.util.concurrent.TimeUnit;
 @Component
 @RequiredArgsConstructor
 public class MySaTokenListener implements SaTokenListener {
+    @Resource
+    private IpUtil ipUtil;
 
     private final SysUserMapper userMapper;
 
@@ -39,13 +42,13 @@ public class MySaTokenListener implements SaTokenListener {
     @Override
     public void doLogin(String loginType, Object loginId, String tokenValue, SaLoginModel loginModel) {
 
-        String ip = IpUtil.getIp();
+        String ip = ipUtil.getIp();
         SysUser user = userMapper.selectById((Integer) loginId);
         // 更新登录信息
         String userAgent = request.getHeader("User-Agent");
         user.setLastLoginTime(LocalDateTime.now());
         user.setIp(ip);
-        user.setIpLocation(IpUtil.getIp2region(ip));
+        user.setIpLocation(ipUtil.getCityInfo(ip));
         user.setOs(UserAgentUtil.getOs(userAgent));
         user.setBrowser(UserAgentUtil.getBrowser(userAgent));
         userMapper.updateById(user);

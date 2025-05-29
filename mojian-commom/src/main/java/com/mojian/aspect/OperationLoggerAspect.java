@@ -21,7 +21,10 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.util.Date;
@@ -39,6 +42,9 @@ public class OperationLoggerAspect {
 
     private final SysOperateLogMapper operateLogMapper;
 
+    @Resource
+    private IpUtil ipUtil;
+
     /**
      * 开始时间
      */
@@ -46,12 +52,14 @@ public class OperationLoggerAspect {
 
     @Pointcut(value = "@annotation(operationLogger)")
     public void pointcut(OperationLogger operationLogger) {
-
     }
+
 
     @Around(value = "pointcut(operationLogger)")
     public Object doAround(ProceedingJoinPoint joinPoint, OperationLogger operationLogger) throws Throwable {
-        HttpServletRequest request = IpUtil.getRequest();
+        // 获取request
+        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = requestAttributes.getRequest();
         StpUtil.checkLogin();
         //因给了演示账号所有权限以供用户观看，所以执行业务前需判断是否是管理员操作
         if  (!StpUtil.hasRole(Constants.ADMIN)) {
@@ -97,7 +105,7 @@ public class OperationLoggerAspect {
         // 当前操作用户
         LoginUserInfo user = (LoginUserInfo) StpUtil.getSession().get(Constants.CURRENT_USER);
         String type = request.getMethod();
-        String ip = IpUtil.getIp();
+        String ip = ipUtil.getIp();
         String url = request.getRequestURI();
 
         // 存储日志
@@ -106,7 +114,7 @@ public class OperationLoggerAspect {
 
         SysOperateLog operateLog = SysOperateLog.builder()
                 .ip(ip)
-                .source(IpUtil.getIp2region(ip))
+                .source(ipUtil.getCityInfo(ip)) // ip来源
                 .type(type)
                 .username(user.getUsername())
                 .paramsJson(paramsJson)

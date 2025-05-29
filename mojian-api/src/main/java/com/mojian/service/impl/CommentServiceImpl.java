@@ -15,11 +15,14 @@ import com.mojian.utils.PageUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
+    @Resource
+    private IpUtil ipUtil;
 
     private final SysCommentMapper sysCommentMapper;
 
@@ -39,9 +42,9 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public void add(SysComment sysComment) {
 
-        String ip = IpUtil.getIp();
+        String ip = ipUtil.getIp();
         sysComment.setIp(ip);
-        sysComment.setIpSource(IpUtil.getIp2region(ip));
+        sysComment.setIpSource(ipUtil.getCityInfo(ip));
         sysComment.setUserId(StpUtil.getLoginIdAsLong());
         sysComment.setContent(SensitiveUtil.filter(sysComment.getContent()));
 

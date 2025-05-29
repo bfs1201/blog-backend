@@ -11,7 +11,10 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.concurrent.TimeUnit;
 
@@ -27,14 +30,17 @@ import java.util.concurrent.TimeUnit;
 public class AccessLimitAspect {
 
     private final RedisUtil redisUtil;
+    @Resource
+    private IpUtil ipUtil;
 
     @Before("@annotation(accessLimit)")
     public void doBefore(JoinPoint joinPoint, AccessLimit accessLimit) throws Throwable {
         int time = accessLimit.time();
-
-        HttpServletRequest request = IpUtil.getRequest();
+        // 获取request
+        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = requestAttributes.getRequest();
         // 拼接redis key = IP + Api限流
-        String key = RedisConstants.RATE_LIMIT_KEY + IpUtil.getIp() + request.getRequestURI();
+        String key = RedisConstants.RATE_LIMIT_KEY + ipUtil.getIp() + request.getRequestURI();
         // 获取redis的value
         Integer maxTimes = null;
         Object value = redisUtil.get(key);

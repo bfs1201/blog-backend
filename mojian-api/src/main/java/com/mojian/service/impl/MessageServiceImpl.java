@@ -8,11 +8,14 @@ import com.mojian.utils.SensitiveUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
+    @Resource
+    private IpUtil ipUtil;
 
     private final SysMessageMapper messageMapper;
 
@@ -23,9 +26,9 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public Boolean add(SysMessage sysMessage) {
-        String ip = IpUtil.getIp();
+        String ip = ipUtil.getIp();
         sysMessage.setIp(ip);
-        sysMessage.setSource(IpUtil.getIp2region(ip));
+        sysMessage.setSource(ipUtil.getCityInfo(ip));
         sysMessage.setContent(SensitiveUtil.filter(sysMessage.getContent()));
         messageMapper.insert(sysMessage);
         return true;
